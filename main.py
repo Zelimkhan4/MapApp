@@ -39,13 +39,13 @@ while running:
             running = 0
         elif ev.type == pygame.KEYDOWN:
             if ev.key == pygame.K_UP:
-                ll[1] += 0.001
+                ll[1] += spn[0] / 100
             elif ev.key == pygame.K_DOWN:
-                ll[1] -= 0.001
+                ll[1] -= spn[0] / 100
             elif ev.key == pygame.K_LEFT:
-                ll[0] -= 0.001
+                ll[0] -= spn[1] / 100
             elif ev.key == pygame.K_RIGHT:
-                ll[0] += 0.001
+                ll[0] += spn[1] / 100
     screen.fill((0, 0, 0))
     image = get_image()
     if image:
