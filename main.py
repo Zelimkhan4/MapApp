@@ -11,7 +11,10 @@ l = 'sat'
 spn = [0.002, 0.002]
 lastll = [34, 34]
 size = width, height = 600, 465
+pt = ''
+scale_value = spn[0]
 pygame.init()
+
 def load_image(filename, colorkey=None):
     fullname = os.path.join('data', filename)
     if os.path.isfile(fullname):
@@ -78,8 +81,18 @@ class PushButton(pygame.sprite.Sprite):
             text = self.font.render('Искать', 0, (100, 100, 100))
             self.image.blit(text, (2, 2))
 
-    def find(self, address):
-        pass
+    def checkClicked(self, pos):
+        if self.rect.x < pos[0] <self.rect.x + self.rect.w and\
+            self.rect.y < pos[1] < self.rect.y + self.rect.h:
+            return 1
+
+    def find(self, addres):
+        global ll
+        global pt
+        new_ll = get_ll(addres)
+        if new_ll:
+            ll = new_ll
+            pt = f'{ll[0]},{ll[1]},pm2rdl1'
 
 box = InputBox()
 button = PushButton()
@@ -100,14 +113,13 @@ def show_image(screen):
     screen.blit(pygame.transform.scale(pygame.image.load('map.png'), (width, height)), (0, 0))
 
 def get_params():
-    return {'ll': f"{ll[0]},{ll[1]}", "spn": f"{spn[0]},{spn[1]}", 'l': type_map}
+    return {'ll': f"{ll[0]},{ll[1]}", "spn": f"{spn[0]},{spn[1]}", 'l': l, 'pt': pt}
 
 pygame.init()
 screen = pygame.display.set_mode(size)
 running = 1
 FPS = 10
 type_maps = ['sat', 'map', 'map,skl,trf']
-type_map = 'sat'
 clock = pygame.time.Clock()
 while running:
     for ev in pygame.event.get():
@@ -115,25 +127,25 @@ while running:
             running = 0
         elif ev.type == pygame.KEYDOWN:  
             if ev.key == pygame.K_PAGEUP:
-                spn[0] -= spn[0] / 2
-                spn[1] -= spn[1] / 2
+                spn[0] -= scale_value / 2
+                spn[1] -= scale_value / 2
             elif ev.key == pygame.K_PAGEDOWN:
-                spn[0] += spn[0] / 2
-                spn[1] += spn[1] / 2
+                spn[0] += scale_value / 2
+                spn[1] += scale_value / 2
             elif ev.key == pygame.K_UP:
-                ll[1] += spn[1] / 10
+                ll[1] += scale_value / 10
             elif ev.key == pygame.K_DOWN:
-                ll[1] -= spn[1] / 10
+                ll[1] -= scale_value / 10
             elif ev.key == pygame.K_RIGHT:
-                ll[0] += spn[1] / 10
+                ll[0] += scale_value / 10
             elif ev.key == pygame.K_LEFT:
-                ll[0] -= spn[1] / 10
+                ll[0] -= scale_value / 10
             elif ev.key == pygame.K_1:
-                type_map = type_maps[0]
+                l = type_maps[0]
             elif ev.key == pygame.K_2:
-                type_map = type_maps[1]
+                l = type_maps[1]
             elif ev.key == pygame.K_3:
-                type_map = type_maps[2]
+                l = type_maps[2]
             elif box.status:
                 if ev.key == pygame.K_BACKSPACE:
                     box.address = box.address[:-1]
@@ -141,6 +153,8 @@ while running:
                     box.address += ev.unicode
         elif ev.type == pygame.MOUSEBUTTONDOWN:
             box.checkClicked(ev.pos)
+            if button.checkClicked(ev.pos):
+                button.find(box.address)
     if checkState():
         image = get_image()
         if image:
@@ -151,6 +165,7 @@ while running:
     all_sprites.update()
     all_sprites.draw(screen)
     pygame.display.flip()
+    print(scale_value, spn[0])
     clock.tick(FPS)
 
 os.remove(name)
