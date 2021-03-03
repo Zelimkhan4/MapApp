@@ -84,6 +84,7 @@ class PushButton(pygame.sprite.Sprite):
     def checkClicked(self, pos):
         if self.rect.x < pos[0] <self.rect.x + self.rect.w and\
             self.rect.y < pos[1] < self.rect.y + self.rect.h:
+            print(pos)
             return 1
 
     def find(self, addres):
