@@ -1,15 +1,88 @@
 import pygame
 import requests
 import os
+from server import get_ll
 
-
+all_sprites = pygame.sprite.Group()
 name = 'map.png'
 URL = 'http://static-maps.yandex.ru/1.x/'
 ll = [37.530887, 55.7033118]
 l = 'sat'
 spn = [0.002, 0.002]
 lastll = [34, 34]
+size = width, height = 600, 465
+pygame.init()
+def load_image(filename, colorkey=None):
+    fullname = os.path.join('data', filename)
+    if os.path.isfile(fullname):
+        image = pygame.image.load(fullname)
+        if colorkey is not None:
+            image.convert()
+            image.set_colorkey(image.get_at((0, 0)))
+        else:
+            image.convert_alpha()
+        return image
+    else:
+        print(f"{fullname} не найден")
 
+class InputBox(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((200, 30))
+        self.image.fill((255, 255, 255))
+        self.rect = self.image.get_rect()
+        self.rect.x = 10
+        self.status = 0
+        self.rect.y = height - 50
+        self.font = pygame.font.Font('data/sans.ttf', 20)    
+        self.address = ''
+
+    def checkClicked(self, pos):
+        if self.rect.x < pos[0] <self.rect.x + self.rect.w and\
+            self.rect.y < pos[1] < self.rect.y + self.rect.h or self.address or self.address:
+            self.status = 1
+        else:
+            self.status = 0
+        self.refreshBox()
+        
+    def refreshBox(self):
+        self.image = pygame.Surface((200, 30))
+        self.image.fill((255, 255, 255))
+
+    def update(self):
+        self.refreshBox()
+        if self.status:
+            text = self.font.render(self.address, 0, (100, 100, 100))
+            self.image.blit(text, (2, 2))
+        else:
+            text = self.font.render('Введите сюда адрес', 0, (100, 100, 100))
+            self.image.blit(text, (2, 2))
+        pygame.display.flip()
+
+
+class PushButton(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((70, 30))
+        self.image.fill((0,0,255))
+        self.rect = self.image.get_rect()
+        self.rect.x = 220
+        self.rect.y = height - 50
+        self.status = 0
+        self.font = pygame.font.Font('data/sans.ttf', 20)
+    
+    def update(self):
+        if self.status:
+            pass
+        else:
+            text = self.font.render('Искать', 0, (100, 100, 100))
+            self.image.blit(text, (2, 2))
+
+    def find(self, address):
+        pass
+
+box = InputBox()
+button = PushButton()
 def get_image():
     image = requests.get(URL, params=get_params())
     if image:
@@ -30,14 +103,12 @@ def get_params():
     return {'ll': f"{ll[0]},{ll[1]}", "spn": f"{spn[0]},{spn[1]}", 'l': type_map}
 
 pygame.init()
-size = width, height = 600, 465
 screen = pygame.display.set_mode(size)
 running = 1
 FPS = 10
 type_maps = ['sat', 'map', 'map,skl,trf']
 type_map = 'sat'
 clock = pygame.time.Clock()
-print(ll[0] + spn[0] * width / 2, abs(ll[0] - spn[0] * height / 2))
 while running:
     for ev in pygame.event.get():
         if ev.type == pygame.QUIT:
@@ -63,7 +134,13 @@ while running:
                 type_map = type_maps[1]
             elif ev.key == pygame.K_3:
                 type_map = type_maps[2]
-    
+            elif box.status:
+                if ev.key == pygame.K_BACKSPACE:
+                    box.address = box.address[:-1]
+                else:
+                    box.address += ev.unicode
+        elif ev.type == pygame.MOUSEBUTTONDOWN:
+            box.checkClicked(ev.pos)
     if checkState():
         image = get_image()
         if image:
@@ -71,7 +148,8 @@ while running:
             load_image(image)
             show_image(screen)
             lastll = ll[:]
-    print(ll)
+    all_sprites.update()
+    all_sprites.draw(screen)
     pygame.display.flip()
     clock.tick(FPS)
 
