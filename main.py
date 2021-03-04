@@ -1,7 +1,7 @@
 import pygame
 import requests
 import os
-from server import get_ll
+from server import get_full_address, get_ll
 
 
 pygame.init()
@@ -14,8 +14,7 @@ spn = [0.002, 0.002]
 pt = ''
 scale_value = spn[0]
 size = width, height = 600, 465
-
-
+screen = pygame.display.set_mode(size)
 lastll = None
 last_spn = None
 last_pt = None
@@ -69,7 +68,34 @@ class InputBox(pygame.sprite.Sprite):
             self.image.blit(text, (2, 2))
         pygame.display.flip()
 
+class OutputField(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((200, 100))
+        self.image.fill((255, 255, 255))
+        self.font = pygame.font.Font('data/sans.ttf', 12)
+        self.rect = self.image.get_rect()
+        self.rect.x = width - self.image.get_width() - 10
+        self.rect.y = height - self.image.get_height() - 10
 
+    def displayText(self, text):
+        portion_of_text = 32
+        height = self.font.get_height()
+        count = 0
+        while text:
+            text_render = self.font.render(text[:portion_of_text], 0, (100, 100, 100))
+            self.image.blit(text_render, (0, height * count))
+            text = text[portion_of_text:]
+            count += 1
+
+        
+    def freshDisplay(self):
+        self.image = pygame.Surface((200, 400))
+        self.image.fill((255, 255, 255))
+
+
+
+field = OutputField()
 class PushButton(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(all_sprites)
@@ -97,7 +123,10 @@ class PushButton(pygame.sprite.Sprite):
     def find(self, addres):
         global ll
         global pt
-        new_ll = get_ll(addres)
+        new_ll, crit_coords = get_ll(addres)
+        address = get_full_address(addres)
+        field.freshDisplay()
+        field.displayText(address)
         if new_ll:
             ll = new_ll
             pt = f'{ll[0]},{ll[1]},pm2rdl1'
@@ -105,6 +134,7 @@ class PushButton(pygame.sprite.Sprite):
 
 box = InputBox()
 button = PushButton()
+
 
 
 def get_image():
@@ -124,7 +154,10 @@ def load_image(image):
 
 
 def show_image(screen):
-    screen.blit(pygame.transform.scale(pygame.image.load('map.png'), (width, height)), (0, 0))
+    crit_coords = []
+    image = pygame.transform.scale(pygame.image.load('map.png'), (width, height))
+    screen.blit(image, (0, 0))
+
 
 
 def get_params():
@@ -132,7 +165,7 @@ def get_params():
 
 
 pygame.init()
-screen = pygame.display.set_mode(size)
+
 running = 1
 FPS = 10
 map_layers = ['sat', 'map', 'map,skl,trf']
@@ -186,4 +219,4 @@ while running:
     pygame.display.flip()
     clock.tick(FPS)
 
-os.remove(name)
+#os.remove(name)
