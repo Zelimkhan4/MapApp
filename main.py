@@ -1,7 +1,7 @@
 import pygame
 import requests
 import os
-from server import get_full_address, get_ll
+from server import get_full_address, get_ll, get_post_code
 
 
 pygame.init()
@@ -21,7 +21,7 @@ last_pt = None
 last_l = None
 crit_coords = [ll[0] + scale_value / 10, ll[0] - scale_value / 10,
                 ll[1] + scale_value / 10, ll[1] - scale_value / 10]
-
+post_code = ''
 
 def load_image(filename, colorkey=None):
     fullname = os.path.join('data', filename)
@@ -90,6 +90,11 @@ class OutputField(pygame.sprite.Sprite):
             self.image.blit(text_render, (0, height * count))
             text = text[portion_of_text:]
             count += 1
+        if tumbler.active:
+            count += 1
+            text = self.font.render(f"Индекс: {post_code}", 0, (100, 100, 100))
+            self.image.blit(text, (0, count * height))
+
 
         
     def freshDisplay(self):
@@ -115,7 +120,6 @@ class PostIndexTumbler(pygame.sprite.Sprite):
             self.color = (255, 255, 0)
         else:
             self.color = (100, 100, 100)
-        print(self.color)
         pygame.draw.circle(self.image, self.color, (self.image.get_width() // 2, self.image.get_height() // 2), 20, 0)
         self.image.blit(self.icon, (self.rect.w // 2 - self.icon.get_width() // 2, self.rect.h // 2 - self.icon.get_height() // 2))
     
@@ -124,13 +128,16 @@ class PostIndexTumbler(pygame.sprite.Sprite):
             self.active = 1
         else:
             self.active = 0
-        print('eve')
 
     def checkClicked(self, pos):
         if self.rect.x <= pos[0] <= self.rect.x + self.rect.w and self.rect.y <= pos[1] <= self.rect.y + self.rect.h:
             self.changeStatus()
+
+
 tumbler = PostIndexTumbler()
 field = OutputField()
+
+
 class PushButton(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(all_sprites)
@@ -159,6 +166,8 @@ class PushButton(pygame.sprite.Sprite):
         global crit_coords
         global ll
         global pt
+        global post_code
+
         new_ll = get_ll(addres)
         address = get_full_address(addres)
         crit_coords = []
@@ -166,6 +175,7 @@ class PushButton(pygame.sprite.Sprite):
         crit_coords.append(ll[1] - (600 // 2) * scale_value)
         crit_coords.append(ll[0] + (465 // 2) * scale_value)
         crit_coords.append(ll[0] - (465 // 2) * scale_value)
+        post_code = get_post_code(address)
         field.freshDisplay()
         field.displayText(address)
         if new_ll:
@@ -242,7 +252,6 @@ while running:
                     box.address = box.address[:-1]
                 else:
                     box.address += ev.unicode
-            print(ll[0], crit_coords[2])
         elif ev.type == pygame.MOUSEBUTTONDOWN:
             box.checkClicked(ev.pos)
             if button.checkClicked(ev.pos):
